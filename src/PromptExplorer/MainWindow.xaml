@@ -1,0 +1,123 @@
+<Window x:Class="PromptExplorer.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:controls="clr-namespace:PromptExplorer.Controls"
+        xmlns:conv="clr-namespace:PromptExplorer.Converters"
+        mc:Ignorable="d"
+        Closing="MainWindow_OnClosing"
+        Title="NAI Prompt Explorer" Height="720" Width="1200">
+    <Window.Resources>
+        <conv:SearchModeToStringConverter x:Key="SearchModeToStringConverter" />
+    </Window.Resources>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="2*" />
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0" Margin="10">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <StackPanel Grid.Row="0" Orientation="Horizontal">
+                <TextBlock VerticalAlignment="Center" Text="検索ワード:" Margin="0,0,8,0" />
+                <TextBox Width="360"
+                         Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                         KeyDown="SearchTextBox_KeyDown"
+                         Margin="0,0,8,0" />
+                <Button Content="検索" Command="{Binding SearchCommand}" Margin="0,0,8,0" />
+                <Button Content="リセット" Command="{Binding ResetCommand}" Margin="0,0,8,0" />
+                <Button Content="{Binding SearchMode, Converter={StaticResource SearchModeToStringConverter}}"
+                        Command="{Binding ToggleSearchModeCommand}" Margin="0,0,8,0" />
+                <TextBlock VerticalAlignment="Center">
+                    <Run Text="ヒット:" />
+                    <Run Text="{Binding HitCount}" />
+                </TextBlock>
+            </StackPanel>
+
+            <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,8,0,0">
+                <TextBlock VerticalAlignment="Center" Text="対象フォルダ:" Margin="0,0,8,0" />
+                <ComboBox Width="360"
+                          ItemsSource="{Binding AvailableFolders}"
+                          SelectedItem="{Binding SelectedFolder, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                          Margin="0,0,8,0" />
+                <Button Content="参照" Command="{Binding BrowseFolderCommand}" Margin="0,0,8,0" />
+                <Button Content="プリセット追加" Command="{Binding AddPresetCommand}" Margin="0,0,8,0" />
+                <Button Content="既定に設定" Command="{Binding SetDefaultFolderCommand}" Margin="0,0,8,0" />
+                <TextBlock VerticalAlignment="Center" TextWrapping="Wrap">
+                    <Run Text="既定:" />
+                    <Run Text="{Binding DefaultFolder}" />
+                </TextBlock>
+            </StackPanel>
+
+            <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,8,0,0">
+                <TextBlock VerticalAlignment="Center" Text="サムネイルサイズ:" Margin="0,0,8,0" />
+                <Slider Width="200" Minimum="64" Maximum="512"
+                        Value="{Binding ThumbnailSize, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                        Margin="0,0,8,0" />
+                <TextBlock VerticalAlignment="Center" Text="{Binding ThumbnailSize, StringFormat=F0}" Margin="0,0,8,0" />
+                <TextBlock VerticalAlignment="Center" TextWrapping="Wrap">Ctrl + マウスホイールでも調整できます。</TextBlock>
+            </StackPanel>
+        </Grid>
+
+        <Border Grid.Row="1" Margin="10" BorderBrush="Gray" BorderThickness="1" CornerRadius="4">
+            <ListBox ItemsSource="{Binding FilteredImages}"
+                     SelectedItem="{Binding SelectedImage, Mode=TwoWay}"
+                     BorderThickness="0"
+                     Background="Transparent"
+                     ScrollViewer.CanContentScroll="True"
+                     PreviewMouseWheel="ThumbnailList_PreviewMouseWheel"
+                     VirtualizingPanel.IsVirtualizing="True"
+                     VirtualizingPanel.ScrollUnit="Pixel"
+                     VirtualizingPanel.VirtualizationMode="Recycling">
+                <ListBox.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <controls:VirtualizingWrapPanel ItemWidth="{Binding DataContext.ThumbnailSize, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                        ItemHeight="{Binding DataContext.ThumbnailSize, RelativeSource={RelativeSource AncestorType=Window}}" />
+                    </ItemsPanelTemplate>
+                </ListBox.ItemsPanel>
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Margin="6" Width="{Binding DataContext.ThumbnailSize, RelativeSource={RelativeSource AncestorType=Window}}">
+                            <Border BorderBrush="#66000000" BorderThickness="1" CornerRadius="4" Background="White">
+                                <Image Source="{Binding Thumbnail}"
+                                       Width="{Binding DataContext.ThumbnailSize, RelativeSource={RelativeSource AncestorType=Window}}"
+                                       Height="{Binding DataContext.ThumbnailSize, RelativeSource={RelativeSource AncestorType=Window}}"
+                                       Stretch="UniformToFill" />
+                            </Border>
+                            <TextBlock Text="{Binding FileName}" TextWrapping="Wrap" FontSize="12" Margin="0,4,0,0" HorizontalAlignment="Center" />
+                        </StackPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </Border>
+
+        <GridSplitter Grid.Row="2" Height="6" HorizontalAlignment="Stretch" Background="#FFBFBFBF" />
+
+        <Border Grid.Row="3" Margin="10" Padding="10" BorderBrush="Gray" BorderThickness="1" CornerRadius="4">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <StackPanel Orientation="Horizontal" Grid.Row="0">
+                    <TextBlock FontWeight="Bold" Text="選択中のファイル:" Margin="0,0,8,0" />
+                    <TextBlock Text="{Binding SelectedImage.FileName}" Margin="0,0,8,0" />
+                    <Button Content="プロンプトを.txtで保存" Command="{Binding ExportPromptCommand}" />
+                </StackPanel>
+                <Border Grid.Row="1" Margin="0,8,0,0" BorderBrush="#FFE0E0E0" BorderThickness="1" Padding="6">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <TextBox Text="{Binding SelectedImage.Prompt}" IsReadOnly="True" TextWrapping="Wrap" AcceptsReturn="True" MinHeight="120" />
+                    </ScrollViewer>
+                </Border>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>
